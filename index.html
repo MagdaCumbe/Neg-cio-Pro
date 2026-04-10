@@ -253,14 +253,18 @@ select.inp{cursor:pointer;}
 <!-- ══ INÍCIO ══ -->
 <div class="page active" id="page-inicio">
   <div style="height:14px"></div>
+
+  <!-- CARTÃO MÊS -->
   <div class="mes-card">
-    <div class="m-lbl">Acumulado do mês 📅</div>
+    <div class="m-lbl">Vendas acumuladas do mês 📅</div>
     <div class="m-val" id="mes-receita">MT 0</div>
     <div class="m-row">
       <div class="m-sub"><div class="m-sub-lbl">Despesas do mês</div><div class="m-sub-val" id="mes-desp">MT 0</div></div>
-      <div class="m-sub"><div class="m-sub-lbl">Lucro do mês</div><div class="m-sub-val" id="mes-lucro">MT 0</div></div>
+      <div class="m-sub"><div class="m-sub-lbl">Saldo (vendas − despesas)</div><div class="m-sub-val" id="mes-saldo">MT 0</div></div>
     </div>
   </div>
+
+  <!-- HOJE -->
   <div class="stat-bar">
     <div class="sb-item"><div class="sb-val" id="hoje-receita" style="color:var(--orange)">MT 0</div><div class="sb-lbl">Vendas hoje</div></div>
     <div class="sep"></div>
@@ -268,10 +272,12 @@ select.inp{cursor:pointer;}
     <div class="sep"></div>
     <div class="sb-item"><div class="sb-val" id="hoje-num">0</div><div class="sb-lbl">Nº vendas</div></div>
   </div>
+
   <div class="stat-grid">
     <div class="stat"><div class="s-ico">⚠️</div><div class="s-val" id="home-stock" style="color:var(--red)">0</div><div class="s-lbl">Stock baixo</div></div>
     <div class="stat"><div class="s-ico">🤝</div><div class="s-val" id="home-fiado" style="color:var(--blue)">MT 0</div><div class="s-lbl">Fiado em aberto</div></div>
   </div>
+
   <button class="big-btn" onclick="abrirSheet('sheet-venda')" style="margin-bottom:10px;">🛒 Registar Venda</button>
   <button class="big-btn ghost" onclick="abrirSheet('sheet-despesa')">💸 Registar Despesa</button>
   <div style="height:18px"></div>
@@ -329,11 +335,13 @@ select.inp{cursor:pointer;}
   <div class="sec-title">Mais</div>
   <div class="card" style="margin-bottom:10px;">
     <div style="font-size:.7rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Resumo do Mês</div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="font-size:.88rem;color:var(--mid);">Receita total</span><span id="res-receita" style="font-weight:700;color:var(--green);">MT 0</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="font-size:.88rem;color:var(--mid);">Vendas</span><span id="res-receita" style="font-weight:700;color:var(--orange);">MT 0</span></div>
     <div class="hr"></div>
     <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="font-size:.88rem;color:var(--mid);">Despesas</span><span id="res-desp" style="font-weight:700;color:var(--red);">MT 0</span></div>
     <div class="hr"></div>
-    <div style="display:flex;justify-content:space-between;"><span style="font-size:.88rem;font-weight:600;">Lucro líquido</span><span id="res-lucro" style="font-weight:800;font-family:'Syne',sans-serif;">MT 0</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="font-size:.88rem;font-weight:600;">Saldo (vendas − despesas)</span><span id="res-saldo" style="font-weight:800;font-family:'Syne',sans-serif;">MT 0</span></div>
+    <div class="hr"></div>
+    <div style="display:flex;justify-content:space-between;"><span style="font-size:.88rem;color:var(--mid);">Lucro das vendas</span><span id="res-lucro" style="font-weight:700;color:var(--green);">MT 0</span></div>
   </div>
   <div class="list-item" onclick="abrirSheet('sheet-despesa')" style="cursor:pointer;"><div class="item-ico" style="background:#FFF0E8;">💸</div><div class="item-body"><div class="item-title">Registar Despesa</div><div class="item-sub">Renda, luz, fornecedor...</div></div><div style="color:var(--mid);">›</div></div>
   <div class="list-item" onclick="navTo('desp-hist')" style="cursor:pointer;"><div class="item-ico" style="background:#FFF0E8;">📋</div><div class="item-body"><div class="item-title">Histórico de Despesas</div><div class="item-sub">Ver todas as saídas</div></div><div style="color:var(--mid);">›</div></div>
@@ -474,11 +482,22 @@ select.inp{cursor:pointer;}
     <button class="tipo-btn" id="p-btn-av" onclick="setProdTipo('avulso')">⚖️ Avulso</button>
   </div>
   <div id="p-caixa-fields" style="display:none;">
-    <label class="form-lbl">Quantas unidades tem uma caixa?</label>
-    <input class="inp" type="number" id="p-qtd-caixa" placeholder="Ex: 24" oninput="calcPrecoPorUnd()">
-    <label class="form-lbl">Preço de venda da caixa inteira (MT)</label>
-    <input class="inp" type="number" id="p-preco-caixa" placeholder="0" oninput="calcPrecoPorUnd()">
-    <div style="background:var(--bg);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:.8rem;color:var(--mid);">→ Preço por unidade: <strong id="preco-und-calc">—</strong></div>
+    <div class="inp-row">
+      <div><label class="form-lbl">Unidades por caixa <span style="color:var(--red)">*</span></label><input class="inp" type="number" id="p-qtd-caixa" placeholder="Ex: 24" oninput="calcCaixa()"></div>
+      <div><label class="form-lbl">Nº de caixas (stock)</label><input class="inp" type="number" id="p-n-caixas" placeholder="Ex: 3" oninput="calcCaixa()"></div>
+    </div>
+    <label class="form-lbl">Preço de venda por caixa (MT) <span style="color:var(--red)">*</span></label>
+    <input class="inp" type="number" id="p-preco-caixa" placeholder="0" oninput="calcCaixaDePorCaixa()">
+    <label class="form-lbl">Preço de venda por unidade (MT)</label>
+    <input class="inp" type="number" id="p-preco-und-cx" placeholder="Calculado automaticamente" oninput="calcCaixaDePorUnd()">
+    <label class="form-lbl">Preço de custo por caixa (MT) <span style="color:var(--red)">*</span></label>
+    <input class="inp" type="number" id="p-custo-caixa" placeholder="Quanto pagou por caixa?" oninput="calcCaixaCustoDePorCaixa()">
+    <label class="form-lbl">Preço de custo por unidade (MT)</label>
+    <input class="inp" type="number" id="p-custo-und-cx" placeholder="Calculado automaticamente" oninput="calcCaixaCustoDePorUnd()">
+    <div style="background:var(--bg);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:.8rem;color:var(--mid);line-height:1.8;">
+      Stock total: <strong id="cx-stock-total">—</strong> unidades &nbsp;·&nbsp;
+      Lucro/cx: <strong id="cx-lucro-cx" style="color:var(--green)">—</strong>
+    </div>
   </div>
   <div id="p-avulso-fields" style="display:none;">
     <label class="form-lbl">Unidade de medida</label>
@@ -496,12 +515,14 @@ select.inp{cursor:pointer;}
       <div style="background:var(--bg);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:.8rem;color:var(--mid);">→ Total em stock: <strong id="p-av-kg-total">—</strong></div>
     </div>
   </div>
-  <div class="inp-row">
+  <div class="inp-row" id="p-preco-stock-row">
     <div><label class="form-lbl" id="p-preco-lbl">Preço de venda (MT)</label><input class="inp" type="number" id="p-preco" placeholder="0" oninput="atualizarLucroPreview()"></div>
     <div id="p-stock-wrap"><label class="form-lbl" id="p-stock-lbl">Stock inicial</label><input class="inp" type="number" id="p-stock" placeholder="0" step="0.01"></div>
   </div>
-  <label class="form-lbl">Preço de custo (MT) — para ver o lucro</label>
-  <input class="inp" type="number" id="p-custo" placeholder="0" oninput="atualizarLucroPreview()">
+  <div id="p-custo-row">
+    <label class="form-lbl">Preço de custo (MT) <span style="color:var(--red)">*</span></label>
+    <input class="inp" type="number" id="p-custo" placeholder="Quanto pagou por unidade?" oninput="atualizarLucroPreview()">
+  </div>
   <div id="p-lucro-preview" style="display:none;background:#F0FFF6;border-radius:10px;padding:12px;margin-bottom:12px;">
     <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:.78rem;color:var(--mid);">Lucro por unidade</span><span id="p-lucro-und" style="font-size:.82rem;font-weight:700;color:var(--green);">—</span></div>
     <div style="display:flex;justify-content:space-between;"><span style="font-size:.78rem;color:var(--mid);">Margem de lucro</span><span id="p-margem" style="font-size:.82rem;font-weight:700;color:var(--green);">—</span></div>
@@ -831,14 +852,19 @@ let prodTipo='unidade', avCompra='directo';
 
 function resetSheetProduto(){
   prodTipo='unidade'; avCompra='directo';
-  ['p-nome','p-preco','p-stock','p-custo','p-qtd-caixa','p-preco-caixa','p-av-nsacos','p-av-kgsaco'].forEach(id=>document.getElementById(id).value='');
+  ['p-nome','p-preco','p-stock','p-custo',
+   'p-qtd-caixa','p-n-caixas','p-preco-caixa','p-preco-und-cx','p-custo-caixa','p-custo-und-cx',
+   'p-av-nsacos','p-av-kgsaco'].forEach(id=>document.getElementById(id).value='');
   ['p-btn-und','p-btn-cx','p-btn-av'].forEach(id=>document.getElementById(id).classList.remove('active'));
   document.getElementById('p-btn-und').classList.add('active');
   document.getElementById('p-caixa-fields').style.display='none';
   document.getElementById('p-avulso-fields').style.display='none';
+  document.getElementById('p-preco-stock-row').style.display='grid';
+  document.getElementById('p-custo-row').style.display='block';
   document.getElementById('p-preco-lbl').textContent='Preço de venda (MT)';
   document.getElementById('p-stock-lbl').textContent='Stock inicial';
   document.getElementById('p-lucro-preview').style.display='none';
+  ['cx-stock-total','cx-lucro-cx'].forEach(id=>document.getElementById(id).textContent='—');
 }
 
 window.setProdTipo = function(tipo) {
@@ -848,9 +874,29 @@ window.setProdTipo = function(tipo) {
   document.getElementById(`p-btn-${mp[tipo]}`).classList.add('active');
   document.getElementById('p-caixa-fields').style.display=tipo==='caixa'?'block':'none';
   document.getElementById('p-avulso-fields').style.display=tipo==='avulso'?'block':'none';
+  // Para caixa: os campos de preço/stock/custo estão dentro de p-caixa-fields
+  document.getElementById('p-preco-stock-row').style.display=tipo==='caixa'?'none':'grid';
+  document.getElementById('p-custo-row').style.display=tipo==='caixa'?'none':'block';
   if(tipo==='avulso'){ document.getElementById('p-preco-lbl').textContent='Preço de venda por kg/L/m (MT)'; document.getElementById('p-stock-lbl').textContent='Stock inicial (kg/L/m)'; }
-  else if(tipo==='caixa'){ document.getElementById('p-preco-lbl').textContent='Preço de venda por unidade (MT)'; document.getElementById('p-stock-lbl').textContent='Stock inicial (unidades)'; }
   else { document.getElementById('p-preco-lbl').textContent='Preço de venda (MT)'; document.getElementById('p-stock-lbl').textContent='Stock inicial'; }
+};
+
+window.calcCaixa = function() {
+  const qtd  = parseFloat(document.getElementById('p-qtd-caixa').value)||0;   // unidades/caixa
+  const nCx  = parseFloat(document.getElementById('p-n-caixas').value)||0;    // nº de caixas
+  const pcx  = parseFloat(document.getElementById('p-preco-caixa').value)||0; // preço/caixa venda
+  const ccx  = parseFloat(document.getElementById('p-custo-caixa').value)||0; // custo/caixa
+  const pUnd = qtd>0 ? pcx/qtd : 0;
+  const cUnd = qtd>0 ? ccx/qtd : 0;
+  const stock= qtd*nCx;
+  const lucroCx = pcx>0 && ccx>0 ? pcx-ccx : null;
+  document.getElementById('cx-preco-und').textContent   = pUnd>0  ? fmt(pUnd)+'/un'                    : '—';
+  document.getElementById('cx-stock-total').textContent = stock>0 ? stock                              : '—';
+  document.getElementById('cx-lucro-cx').textContent    = lucroCx!==null ? fmt(lucroCx)+'/cx'          : '—';
+  // Preencher campos internos usados pelo adicionarProduto
+  document.getElementById('p-preco').value = pUnd.toFixed(2);
+  document.getElementById('p-custo').value = cUnd.toFixed(2);
+  document.getElementById('p-stock').value = stock;
 };
 
 window.setAvCompra = function(modo) {
@@ -870,12 +916,52 @@ window.calcKgTotal = function() {
   if(tot>0) document.getElementById('p-stock').value=tot;
 };
 
-window.calcPrecoPorUnd = function() {
-  const qtd=parseFloat(document.getElementById('p-qtd-caixa').value)||0;
-  const pc =parseFloat(document.getElementById('p-preco-caixa').value)||0;
-  const pu=qtd>0?pc/qtd:0;
-  document.getElementById('preco-und-calc').textContent=pu>0?fmt(pu)+'/un':'—';
-  if(pu>0){document.getElementById('p-preco').value=pu.toFixed(2);window.atualizarLucroPreview();}
+// calcCaixa definido acima em setProdTipo
+// Funções bidirecionais para preço de caixa ↔ unidade
+
+function _calcCaixaPreview(){
+  const qtd = parseFloat(document.getElementById('p-qtd-caixa').value)||0;
+  const nCx = parseFloat(document.getElementById('p-n-caixas').value)||0;
+  const pc  = parseFloat(document.getElementById('p-preco-caixa').value)||0;
+  const cc  = parseFloat(document.getElementById('p-custo-caixa').value)||0;
+  const stock = qtd*nCx;
+  const lucroCx = pc>0&&cc>0 ? pc-cc : null;
+  document.getElementById('cx-stock-total').textContent = stock>0?stock:'—';
+  document.getElementById('cx-lucro-cx').textContent = lucroCx!==null?fmt(lucroCx)+'/cx':'—';
+}
+
+window.calcCaixaDePorCaixa = function(){
+  // Utilizador digitou preço por caixa → calcular por unidade
+  const qtd = parseFloat(document.getElementById('p-qtd-caixa').value)||0;
+  const pc  = parseFloat(document.getElementById('p-preco-caixa').value)||0;
+  if(qtd>0&&pc>0) document.getElementById('p-preco-und-cx').value = (pc/qtd).toFixed(2);
+  else document.getElementById('p-preco-und-cx').value='';
+  _calcCaixaPreview();
+};
+
+window.calcCaixaDePorUnd = function(){
+  // Utilizador digitou preço por unidade → calcular por caixa
+  const qtd = parseFloat(document.getElementById('p-qtd-caixa').value)||0;
+  const pu  = parseFloat(document.getElementById('p-preco-und-cx').value)||0;
+  if(qtd>0&&pu>0) document.getElementById('p-preco-caixa').value = (pu*qtd).toFixed(2);
+  else document.getElementById('p-preco-caixa').value='';
+  _calcCaixaPreview();
+};
+
+window.calcCaixaCustoDePorCaixa = function(){
+  const qtd = parseFloat(document.getElementById('p-qtd-caixa').value)||0;
+  const cc  = parseFloat(document.getElementById('p-custo-caixa').value)||0;
+  if(qtd>0&&cc>0) document.getElementById('p-custo-und-cx').value = (cc/qtd).toFixed(2);
+  else document.getElementById('p-custo-und-cx').value='';
+  _calcCaixaPreview();
+};
+
+window.calcCaixaCustoDePorUnd = function(){
+  const qtd = parseFloat(document.getElementById('p-qtd-caixa').value)||0;
+  const cu  = parseFloat(document.getElementById('p-custo-und-cx').value)||0;
+  if(qtd>0&&cu>0) document.getElementById('p-custo-caixa').value = (cu*qtd).toFixed(2);
+  else document.getElementById('p-custo-caixa').value='';
+  _calcCaixaPreview();
 };
 
 window.atualizarLucroPreview = function() {
@@ -892,20 +978,61 @@ window.atualizarLucroPreview = function() {
 
 window.adicionarProduto = async function() {
   const nome=document.getElementById('p-nome').value.trim();
-  const preco=parseFloat(document.getElementById('p-preco').value)||0;
-  const custo=parseFloat(document.getElementById('p-custo').value)||0;
   const min=_cfg.minimo||5;
-  if(!nome||!preco){toast('⚠️ Nome e preço são obrigatórios');return;}
-  let stock=0,qtdCaixa=1,unidade='',usaSacos=false,kgPorSaco=0;
-  if(prodTipo==='caixa'){qtdCaixa=parseInt(document.getElementById('p-qtd-caixa').value)||1;stock=parseFloat(document.getElementById('p-stock').value)||0;}
-  else if(prodTipo==='avulso'){
-    unidade=document.getElementById('p-unidade').value||'kg';
+  if(!nome){toast('⚠️ Nome é obrigatório');return;}
+
+  let preco=0, custo=0, stock=0, qtdCaixa=1, unidade='', usaSacos=false, kgPorSaco=0;
+  let nCaixas=0, precoPorCaixa=0, custoPorCaixa=0;
+
+  if(prodTipo==='caixa'){
+    qtdCaixa      = parseInt(document.getElementById('p-qtd-caixa').value)||1;
+    nCaixas       = parseFloat(document.getElementById('p-n-caixas').value)||0;
+    precoPorCaixa = parseFloat(document.getElementById('p-preco-caixa').value)||0;
+    custoPorCaixa = parseFloat(document.getElementById('p-custo-caixa').value)||0;
+    const precoUndInput = parseFloat(document.getElementById('p-preco-und-cx').value)||0;
+    const custoUndInput = parseFloat(document.getElementById('p-custo-und-cx').value)||0;
+    if(!precoPorCaixa && !precoUndInput) { toast('⚠️ Insira o preço de venda por caixa ou por unidade'); return; }
+    if(!custoPorCaixa && !custoUndInput) { toast('⚠️ Insira o preço de custo por caixa ou por unidade'); return; }
+    if(!qtdCaixa) { toast('⚠️ Indique quantas unidades tem uma caixa'); return; }
+    // Usar o que estiver preenchido; prioridade ao campo por caixa
+    const pcx = precoPorCaixa || precoUndInput*qtdCaixa;
+    const ccx = custoPorCaixa || custoUndInput*qtdCaixa;
+    preco = pcx / qtdCaixa;  // preço por unidade — usado nas vendas
+    custo = ccx / qtdCaixa;  // custo por unidade
+    precoPorCaixa = pcx;
+    custoPorCaixa = ccx;
+    stock = qtdCaixa * nCaixas;
+  } else if(prodTipo==='avulso'){
+    preco   = parseFloat(document.getElementById('p-preco').value)||0;
+    custo   = parseFloat(document.getElementById('p-custo').value)||0;
+    unidade = document.getElementById('p-unidade').value||'kg';
     if(avCompra==='sacos'){usaSacos=true;kgPorSaco=parseFloat(document.getElementById('p-av-kgsaco').value)||0;}
-    stock=parseFloat(document.getElementById('p-stock').value)||0;
-  } else { stock=parseFloat(document.getElementById('p-stock').value)||0; }
+    stock   = parseFloat(document.getElementById('p-stock').value)||0;
+    if(!preco) { toast('⚠️ Preço de venda é obrigatório'); return; }
+    if(!custo) { toast('⚠️ Preço de custo é obrigatório'); return; }
+  } else {
+    preco = parseFloat(document.getElementById('p-preco').value)||0;
+    custo = parseFloat(document.getElementById('p-custo').value)||0;
+    stock = parseFloat(document.getElementById('p-stock').value)||0;
+    if(!preco) { toast('⚠️ Preço de venda é obrigatório'); return; }
+    if(!custo) { toast('⚠️ Preço de custo é obrigatório'); return; }
+  }
+
+  // Valores fixos: investimento e lucro possível. Não mudam com vendas.
+  const investimentoTotal = custo * stock;
+  const lucroPossivel     = (preco - custo) * stock; // lucro se vender todo o stock inicial
+
+  const dados = {
+    nome, tipo:prodTipo, qtdCaixa, unidade, usaSacos, kgPorSaco,
+    preco, custo, stock, min,
+    ...(prodTipo==='caixa' && {nCaixas, precoPorCaixa, custoPorCaixa}),
+    investimentoTotal,
+    lucroPossivel,   // fixo — não diminui com vendas
+    criadoEm: serverTimestamp()
+  };
 
   try {
-    await addDoc(col('produtos'), {nome,tipo:prodTipo,qtdCaixa,unidade,usaSacos,kgPorSaco,preco,custo,stock,min,criadoEm:serverTimestamp()});
+    await addDoc(col('produtos'), dados);
     fecharSheet('sheet-produto');
     toast('✅ Produto adicionado!');
   } catch(e){toast('❌ Erro ao guardar: '+e.message);}
@@ -981,7 +1108,13 @@ window.confirmarAbastecimento = async function() {
     add=p.tipo==='caixa'?qtd*p.qtdCaixa:qtd;
   }
   if(!add){toast('⚠️ Quantidade inválida');return;}
-  await updateDoc(ref('produtos',p.id),{stock:increment(add)});
+  // Ao reabastecer: investimento e lucro possível aumentam (custo/lucro × unidades adicionadas)
+  const investAdd  = (p.custo||0) * add;
+  const lucroAdd   = ((p.preco||0)-(p.custo||0)) * add;
+  const updateData = {stock: increment(add)};
+  if(investAdd>0)  updateData.investimentoTotal = increment(investAdd);
+  if(lucroAdd>0)   updateData.lucroPossivel     = increment(lucroAdd);
+  await updateDoc(ref('produtos',p.id), updateData);
   fecharSheet('sheet-abastecer');
   const u=p.tipo==='avulso'?(p.unidade||'kg'):'';
   toast(`✅ +${fmtN(add,2)}${u} adicionados!`);
@@ -1218,25 +1351,30 @@ window.marcarPago = async function(id) {
 ══════════════════════════════════ */
 function renderInicio(){
   const hj=hoje(), mes=hj.slice(0,7);
+
+  // Hoje
   const vHj=_vendas.filter(v=>v.data&&v.data.startsWith(hj));
-  const recHj=vHj.reduce((s,v)=>s+v.total,0);
-  const lucHj=vHj.reduce((s,v)=>s+(v.lucro||0),0);
+  const vendasHj = vHj.reduce((s,v)=>s+v.total,0);
+  const lucroHj  = vHj.reduce((s,v)=>s+(v.lucro||0),0);
+
+  // Mês
   const vMes=_vendas.filter(v=>v.data&&v.data.startsWith(mes));
-  const recMes=vMes.reduce((s,v)=>s+v.total,0);
-  const despMes=_despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
-  const lucMes=recMes-despMes;
+  const vendasMes = vMes.reduce((s,v)=>s+v.total,0);
+  const despMes   = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
+  const saldoMes  = vendasMes - despMes; // Saldo real de caixa
 
-  document.getElementById('hoje-receita').textContent=fmt(recHj);
-  document.getElementById('hoje-lucro').textContent=fmt(lucHj);
-  document.getElementById('hoje-num').textContent=vHj.length;
-  document.getElementById('mes-receita').textContent=fmt(recMes);
-  document.getElementById('mes-desp').textContent=fmt(despMes);
-  document.getElementById('mes-lucro').textContent=fmt(Math.abs(lucMes))+(lucMes<0?' ⚠️':'');
+  document.getElementById('hoje-receita').textContent = fmt(vendasHj);
+  document.getElementById('hoje-lucro').textContent   = fmt(lucroHj);
+  document.getElementById('hoje-num').textContent     = vHj.length;
+  document.getElementById('mes-receita').textContent  = fmt(vendasMes);
+  document.getElementById('mes-desp').textContent     = fmt(despMes);
+  document.getElementById('mes-saldo').textContent    = fmt(Math.abs(saldoMes))+(saldoMes<0?' ⚠️':'');
 
+  // Alertas
   const stockBaixo=_produtos.filter(p=>p.stock<=p.min).length;
   const totalFiado=_fiado.reduce((s,f)=>s+f.valor,0);
-  document.getElementById('home-stock').textContent=stockBaixo;
-  document.getElementById('home-fiado').textContent=fmt(totalFiado);
+  document.getElementById('home-stock').textContent = stockBaixo;
+  document.getElementById('home-fiado').textContent = fmt(totalFiado);
   document.getElementById('fiado-dot').style.display=_fiado.length?'block':'none';
 
   const el=document.getElementById('home-lista');
@@ -1299,17 +1437,19 @@ function renderEstoque(){
 
   const alertas=_produtos.filter(p=>p.stock<=p.min);
   document.getElementById('estoque-alertas').innerHTML=alertas.length?`<div class="alert-banner">⚠️ ${alertas.length} produto(s) com stock baixo ou esgotado</div>`:'';
-  const investTotal=_produtos.reduce((s,p)=>s+(p.custo||0)*p.stock,0);
-  const lucroPos=_produtos.reduce((s,p)=>s+Math.max(0,((p.preco||0)-(p.custo||0))*p.stock),0);
-  document.getElementById('est-invest').textContent=fmt(investTotal);
-  document.getElementById('est-lucro-pos').textContent=fmt(lucroPos);
+  const investTotal  = _produtos.reduce((s,p)=>s+(p.investimentoTotal||0),0);
+  // Lucro possível: fixo, guardado no produto. Não diminui com vendas.
+  const lucroPos     = _produtos.reduce((s,p)=>s+(p.lucroPossivel||0),0);
+  document.getElementById('est-invest').textContent    = fmt(investTotal);
+  document.getElementById('est-lucro-pos').textContent = fmt(lucroPos);
 
   const el=document.getElementById('estoque-lista');
   if(!prods.length){el.innerHTML=`<div class="empty"><div class="e-ico">📦</div><div class="e-txt">Nenhum produto encontrado.</div></div>`;return;}
   el.innerHTML=prods.map(p=>{
     const esg=p.stock<=0, bx=p.stock>0&&p.stock<=p.min;
     const tCls=esg?'red':bx?'orange':'green', tLbl=esg?'Sem stock':bx?'Stock baixo':'OK';
-    const invest=(p.custo||0)*p.stock, lucroP=((p.preco||0)-(p.custo||0))*p.stock;
+    const invest  = p.investimentoTotal||0;
+    const lucroP  = p.lucroPossivel||0; // fixo, não diminui com vendas
     const isAv=p.tipo==='avulso', u=isAv?(p.unidade||'kg'):'';
     return `<div class="list-item" style="align-items:flex-start;cursor:default;">
       <div class="item-ico" style="background:${isAv?'#F5F0FF':'#F0F4FF'};margin-top:2px;">${isAv?'⚖️':'📦'}</div>
@@ -1322,7 +1462,7 @@ function renderEstoque(){
           <span class="tag ${tCls}">${tLbl}</span>
           <span style="font-size:.72rem;color:var(--mid)">${isAv?fmtStockAvulso(p):p.stock+' unidades'}</span>
         </div>
-        ${invest?`<div style="font-size:.72rem;color:var(--mid);margin-top:4px;">Investido: <strong style="color:var(--dark)">${fmt(invest)}</strong>${p.custo?` · Lucro poss.: <strong style="color:var(--green)">${fmt(lucroP)}</strong>`:''}</div>`:''}
+        ${invest?`<div style="font-size:.72rem;color:var(--mid);margin-top:4px;">Investido: <strong style="color:var(--dark)">${fmt(invest)}</strong> · Lucro poss.: <strong style="color:var(--green)">${fmt(lucroP)}</strong></div>`:''}
       </div>
       <div class="item-right">
         <div class="item-val">${fmt(p.preco)}<span style="font-size:.58rem;font-weight:400;color:var(--mid);font-family:'DM Sans'">/${isAv?u:'un'}</span></div>
@@ -1352,13 +1492,16 @@ function renderFiado(){
 
 function renderMais(){
   const mes=hoje().slice(0,7);
-  const recMes=_vendas.filter(v=>v.data&&v.data.startsWith(mes)).reduce((s,v)=>s+v.total,0);
-  const despMes=_despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
-  const lucro=recMes-despMes;
-  document.getElementById('res-receita').textContent=fmt(recMes);
-  document.getElementById('res-desp').textContent=fmt(despMes);
-  document.getElementById('res-lucro').textContent=fmt(lucro);
-  document.getElementById('res-lucro').style.color=lucro>=0?'var(--green)':'var(--red)';
+  const vMes=_vendas.filter(v=>v.data&&v.data.startsWith(mes));
+  const vendasMes = vMes.reduce((s,v)=>s+v.total,0);
+  const despMes   = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
+  const saldoMes  = vendasMes - despMes;
+  const lucroMes  = vMes.reduce((s,v)=>s+(v.lucro||0),0);
+  document.getElementById('res-receita').textContent = fmt(vendasMes);
+  document.getElementById('res-desp').textContent    = fmt(despMes);
+  document.getElementById('res-saldo').textContent   = fmt(Math.abs(saldoMes))+(saldoMes<0?' ⚠️':'');
+  document.getElementById('res-saldo').style.color   = saldoMes>=0?'var(--green)':'var(--red)';
+  document.getElementById('res-lucro').textContent   = fmt(lucroMes);
 }
 
 function renderDespHistorico(){
