@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<!-- PWA -->
+<meta name="theme-color" content="#FF5C1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="NegócioPro">
 <title>NegócioPro</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -14,7 +20,18 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);min-height:100dvh;max-width:480px;margin:0 auto;overflow-x:hidden;}
 
-/* ── AUTH SCREENS ── */
+/* OFFLINE BANNER */
+#conn-status{
+  display:none;
+  position:fixed;top:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:#1A1A1A;color:#fff;
+  font-size:.75rem;font-weight:600;
+  padding:8px 16px;
+  align-items:center;justify-content:center;
+  gap:8px;z-index:999;
+  text-align:center;
+}
 #auth-screen{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:100dvh;padding:28px 24px;background:var(--white);
@@ -196,6 +213,8 @@ select.inp{cursor:pointer;}
 </style>
 </head>
 <body>
+
+<div id="conn-status"></div>
 
 <!-- ══ LOADING ══ -->
 <div id="loading-screen">
@@ -589,7 +608,8 @@ import { getAuth, createUserWithEmailAndPassword,
 import { getFirestore, collection, doc, addDoc, setDoc,
          getDocs, deleteDoc, updateDoc, onSnapshot,
          query, where, orderBy, serverTimestamp,
-         increment, getDoc }                         from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+         increment, getDoc,
+         enableIndexedDbPersistence }                 from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 /* ── CONFIG ── */
 const firebaseConfig = {
@@ -604,6 +624,36 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+
+/* ── OFFLINE PERSISTENCE ──
+   Guarda todos os dados no dispositivo (IndexedDB).
+   Quando não há internet: lê e escreve localmente.
+   Quando a internet volta: sincroniza automaticamente com o servidor.
+*/
+enableIndexedDbPersistence(db).catch(err => {
+  if(err.code === 'failed-precondition'){
+    // Múltiplas abas abertas — persistence só funciona numa aba de cada vez
+    console.warn('Offline persistence desactivado: múltiplas abas abertas.');
+  } else if(err.code === 'unimplemented'){
+    // Browser não suporta IndexedDB (muito raro)
+    console.warn('Este browser não suporta modo offline.');
+  }
+});
+
+/* ── INDICADOR DE LIGAÇÃO ── */
+function mostrarEstadoLigacao(){
+  const el = document.getElementById('conn-status');
+  if(!el) return;
+  if(navigator.onLine){
+    el.textContent=''; el.style.display='none';
+  } else {
+    el.textContent='📵 Sem internet — a trabalhar offline';
+    el.style.display='flex';
+  }
+}
+window.addEventListener('online',  mostrarEstadoLigacao);
+window.addEventListener('offline', mostrarEstadoLigacao);
+mostrarEstadoLigacao();
 
 /* ── ESTADO GLOBAL ── */
 let uid = null;         // user id
@@ -1534,6 +1584,53 @@ function initDate(){
   document.getElementById('greet-date').textContent=`${dias[d.getDay()]}, ${d.getDate()} ${meses[d.getMonth()]}`;
 }
 
+</script>
+
+<!-- SERVICE WORKER — cache da app para funcionar offline -->
+<script>
+if('serviceWorker' in navigator){
+  // Regista o SW inline usando um Blob
+  const swCode = `
+    const CACHE = 'negociopro-v1';
+    const ASSETS = [
+      'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap',
+      'https://fonts.gstatic.com'
+    ];
+
+    self.addEventListener('install', e => {
+      e.waitUntil(
+        caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{}))
+      );
+      self.skipWaiting();
+    });
+
+    self.addEventListener('activate', e => {
+      e.waitUntil(
+        caches.keys().then(keys =>
+          Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+        )
+      );
+      self.clients.claim();
+    });
+
+    // Network first, fallback to cache
+    self.addEventListener('fetch', e => {
+      if(e.request.method !== 'GET') return;
+      e.respondWith(
+        fetch(e.request)
+          .then(res => {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+            return res;
+          })
+          .catch(() => caches.match(e.request))
+      );
+    });
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
 </script>
 </body>
 </html>
