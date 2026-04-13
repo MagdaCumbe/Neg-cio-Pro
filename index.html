@@ -341,7 +341,7 @@ select.inp{cursor:pointer;}
     <div class="hr"></div>
     <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="font-size:.88rem;font-weight:600;">Saldo (vendas − despesas)</span><span id="res-saldo" style="font-weight:800;font-family:'Syne',sans-serif;">MT 0</span></div>
     <div class="hr"></div>
-    <div style="display:flex;justify-content:space-between;"><span style="font-size:.88rem;color:var(--mid);">Lucro das vendas</span><span id="res-lucro" style="font-weight:700;color:var(--green);">MT 0</span></div>
+    <div style="display:flex;justify-content:space-between;"><span style="font-size:.88rem;color:var(--mid);">Lucro líquido</span><span id="res-lucro" style="font-weight:700;color:var(--green);">MT 0</span></div>
   </div>
   <div class="list-item" onclick="abrirSheet('sheet-despesa')" style="cursor:pointer;"><div class="item-ico" style="background:#FFF0E8;">💸</div><div class="item-body"><div class="item-title">Registar Despesa</div><div class="item-sub">Renda, luz, fornecedor...</div></div><div style="color:var(--mid);">›</div></div>
   <div class="list-item" onclick="navTo('desp-hist')" style="cursor:pointer;"><div class="item-ico" style="background:#FFF0E8;">📋</div><div class="item-body"><div class="item-title">Histórico de Despesas</div><div class="item-sub">Ver todas as saídas</div></div><div style="color:var(--mid);">›</div></div>
@@ -1353,18 +1353,21 @@ function renderInicio(){
   const hj=hoje(), mes=hj.slice(0,7);
 
   // Hoje
-  const vHj=_vendas.filter(v=>v.data&&v.data.startsWith(hj));
+  const vHj      = _vendas.filter(v=>v.data&&v.data.startsWith(hj));
   const vendasHj = vHj.reduce((s,v)=>s+v.total,0);
-  const lucroHj  = vHj.reduce((s,v)=>s+(v.lucro||0),0);
+  const despHj   = _despesas.filter(d=>d.data&&d.data.startsWith(hj)).reduce((s,d)=>s+d.valor,0);
+  const lucroHj  = vHj.reduce((s,v)=>s+(v.lucro||0),0) - despHj;
 
   // Mês
-  const vMes=_vendas.filter(v=>v.data&&v.data.startsWith(mes));
-  const vendasMes = vMes.reduce((s,v)=>s+v.total,0);
-  const despMes   = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
-  const saldoMes  = vendasMes - despMes; // Saldo real de caixa
+  const vMes     = _vendas.filter(v=>v.data&&v.data.startsWith(mes));
+  const vendasMes= vMes.reduce((s,v)=>s+v.total,0);
+  const despMes  = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
+  const lucroMes = vMes.reduce((s,v)=>s+(v.lucro||0),0) - despMes;
+  const saldoMes = vendasMes - despMes;
 
   document.getElementById('hoje-receita').textContent = fmt(vendasHj);
-  document.getElementById('hoje-lucro').textContent   = fmt(lucroHj);
+  document.getElementById('hoje-lucro').textContent   = (lucroHj<0?'-':'')+fmt(Math.abs(lucroHj));
+  document.getElementById('hoje-lucro').style.color   = lucroHj>=0?'var(--green)':'var(--red)';
   document.getElementById('hoje-num').textContent     = vHj.length;
   document.getElementById('mes-receita').textContent  = fmt(vendasMes);
   document.getElementById('mes-desp').textContent     = fmt(despMes);
@@ -1492,16 +1495,18 @@ function renderFiado(){
 
 function renderMais(){
   const mes=hoje().slice(0,7);
-  const vMes=_vendas.filter(v=>v.data&&v.data.startsWith(mes));
-  const vendasMes = vMes.reduce((s,v)=>s+v.total,0);
-  const despMes   = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
-  const saldoMes  = vendasMes - despMes;
-  const lucroMes  = vMes.reduce((s,v)=>s+(v.lucro||0),0);
+  const vMes     = _vendas.filter(v=>v.data&&v.data.startsWith(mes));
+  const vendasMes= vMes.reduce((s,v)=>s+v.total,0);
+  const despMes  = _despesas.filter(d=>d.data&&d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
+  const saldoMes = vendasMes - despMes;
+  // Lucro = (vendas - custo dos produtos vendidos) - despesas
+  const lucroMes = vMes.reduce((s,v)=>s+(v.lucro||0),0) - despMes;
   document.getElementById('res-receita').textContent = fmt(vendasMes);
   document.getElementById('res-desp').textContent    = fmt(despMes);
   document.getElementById('res-saldo').textContent   = fmt(Math.abs(saldoMes))+(saldoMes<0?' ⚠️':'');
   document.getElementById('res-saldo').style.color   = saldoMes>=0?'var(--green)':'var(--red)';
-  document.getElementById('res-lucro').textContent   = fmt(lucroMes);
+  document.getElementById('res-lucro').textContent   = (lucroMes<0?'-':'')+fmt(Math.abs(lucroMes));
+  document.getElementById('res-lucro').style.color   = lucroMes>=0?'var(--green)':'var(--red)';
 }
 
 function renderDespHistorico(){
